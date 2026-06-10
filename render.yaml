@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: processoia-api
+    runtime: docker
+    dockerfilePath: ./src/ProcessIA.API/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:8080
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: processoia-db
+          property: connectionString
+      - key: Jwt__Secret
+        generateValue: true
+      - key: Jwt__Issuer
+        value: processiaapp
+      - key: Jwt__Audience
+        value: processiaapp
+      - key: Anthropic__ApiKey
+        sync: false
+
+databases:
+  - name: processoia-db
+    plan: free
+    databaseName: processiadb
+    user: processiauser

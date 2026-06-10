@@ -7,7 +7,7 @@ public class LegalProcess
     public User User { get; set; } = null!;
 
     public string FileName { get; set; } = null!;
-    public string BlobUrl { get; set; } = null!;
+    public string FilePath { get; set; } = null!;
     public long FileSizeBytes { get; set; }
 
     public ProcessStatus Status { get; set; } = ProcessStatus.Pending;

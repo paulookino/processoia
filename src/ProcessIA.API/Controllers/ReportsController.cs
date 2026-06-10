@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProcessIA.API.Data;
 using ProcessIA.API.Models;
+using ProcessIA.API.Services;
 
 namespace ProcessIA.API.Controllers;
 

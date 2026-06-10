@@ -21,6 +21,9 @@ public class AuthController(UserManager<User> userManager, IConfiguration config
         if (!result.Succeeded)
             return BadRequest(result.Errors.Select(e => e.Description));
 
+        user.SubscriptionStatus = SubscriptionStatus.Active;
+        await userManager.UpdateAsync(user);
+
         return Ok(new { message = "Conta criada. Faça login para continuar." });
     }
 

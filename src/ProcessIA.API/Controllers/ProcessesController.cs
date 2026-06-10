@@ -14,7 +14,7 @@ namespace ProcessIA.API.Controllers;
 [Route("api/processes")]
 public class ProcessesController(
     AppDbContext db,
-    BlobStorageService blob,
+    TempFileService files,
     UserManager<User> userManager) : ControllerBase
 {
     private const long MaxFileSizeBytes = 50 * 1024 * 1024; // 50MB
@@ -25,9 +25,6 @@ public class ProcessesController(
         var user = await userManager.GetUserAsync(User);
         if (user is null) return Unauthorized();
 
-        if (user.SubscriptionStatus != SubscriptionStatus.Active)
-            return StatusCode(402, new { error = "Assinatura necessária para enviar processos." });
-
         if (file.Length > MaxFileSizeBytes)
             return BadRequest(new { error = "Arquivo muito grande. Limite: 50MB." });
 
@@ -35,13 +32,13 @@ public class ProcessesController(
             return BadRequest(new { error = "Apenas arquivos PDF são aceitos." });
 
         await using var stream = file.OpenReadStream();
-        var (blobUrl, _) = await blob.UploadAsync(stream, file.FileName);
+        var filePath = await files.SaveAsync(stream, file.FileName);
 
         var process = new LegalProcess
         {
             UserId = user.Id,
             FileName = file.FileName,
-            BlobUrl = blobUrl,
+            FilePath = filePath,
             FileSizeBytes = file.Length
         };
 

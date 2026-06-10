@@ -7,17 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.AI.DocumentIntelligence" Version="1.0.0" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.19.1" />
-    <PackageReference Include="Anthropic.SDK" Version="3.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
-    <PackageReference Include="Stripe.net" Version="45.0.0" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.6" />
     <PackageReference Include="Hangfire.PostgreSql" Version="1.20.9" />
     <PackageReference Include="QuestPDF" Version="2024.3.4" />
+    <PackageReference Include="PdfPig" Version="0.1.8" />
   </ItemGroup>
 
 </Project>

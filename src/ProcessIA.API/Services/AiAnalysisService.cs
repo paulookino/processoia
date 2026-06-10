@@ -1,17 +1,17 @@
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
-using Anthropic.SDK;
-using Anthropic.SDK.Messaging;
 using ProcessIA.API.Models;
 
 namespace ProcessIA.API.Services;
 
 public class AiAnalysisService(IConfiguration config, ILogger<AiAnalysisService> logger)
 {
-    private readonly AnthropicClient _client = new(config["Anthropic:ApiKey"]!);
+    private static readonly HttpClient Http = new();
 
     private const string SystemPrompt = """
         You are a Brazilian legal document analyst with 20 years of experience.
-        You have been given the full text of a scanned legal process (processo judicial).
+        You have been given the full text of a legal process (processo judicial).
         The text may have OCR errors — use context to interpret correctly.
 
         Extract and return ONLY valid JSON with this exact structure:
@@ -40,21 +40,7 @@ public class AiAnalysisService(IConfiguration config, ILogger<AiAnalysisService>
 
     public async Task<AnalysisResult> AnalyzeAsync(string extractedText)
     {
-        var messages = new List<Message>
-        {
-            new() { Role = RoleType.User, Content = $"Analyze this legal process:\n\n{extractedText}" }
-        };
-
-        var parameters = new MessageParameters
-        {
-            Model = AnthropicModels.Claude3Sonnet,
-            MaxTokens = 2048,
-            System = SystemPrompt,
-            Messages = messages
-        };
-
-        var response = await _client.Messages.GetClaudeMessageAsync(parameters);
-        var json = response.Content.First().Text;
+        var json = await CallClaudeAsync($"Analyze this legal process:\n\n{extractedText}");
 
         try
         {
@@ -62,31 +48,41 @@ public class AiAnalysisService(IConfiguration config, ILogger<AiAnalysisService>
         }
         catch (JsonException)
         {
-            logger.LogWarning("Claude returned invalid JSON on first attempt. Retrying with stricter prompt.");
-            return await RetryWithStricterPromptAsync(extractedText);
+            logger.LogWarning("Claude returned invalid JSON. Retrying.");
+            var retry = await CallClaudeAsync(
+                $"Return ONLY a raw JSON object, no markdown, no explanation. Analyze:\n\n{extractedText}");
+            return ParseResult(retry);
         }
     }
 
-    private async Task<AnalysisResult> RetryWithStricterPromptAsync(string extractedText)
+    private async Task<string> CallClaudeAsync(string userMessage)
     {
-        var messages = new List<Message>
+        var apiKey = config["Anthropic:ApiKey"]!;
+
+        var body = JsonSerializer.Serialize(new
         {
-            new() {
-                Role = RoleType.User,
-                Content = $"Return ONLY a raw JSON object, no markdown, no explanation. Analyze:\n\n{extractedText}"
+            model = "claude-haiku-4-5-20251001",
+            max_tokens = 2048,
+            system = SystemPrompt,
+            messages = new[]
+            {
+                new { role = "user", content = userMessage }
             }
-        };
+        });
 
-        var parameters = new MessageParameters
-        {
-            Model = AnthropicModels.Claude3Sonnet,
-            MaxTokens = 2048,
-            System = SystemPrompt,
-            Messages = messages
-        };
+        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
+        request.Headers.Add("x-api-key", apiKey);
+        request.Headers.Add("anthropic-version", "2023-06-01");
+        request.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
-        var response = await _client.Messages.GetClaudeMessageAsync(parameters);
-        return ParseResult(response.Content.First().Text);
+        var response = await Http.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        return doc.RootElement
+            .GetProperty("content")[0]
+            .GetProperty("text")
+            .GetString()!;
     }
 
     private static AnalysisResult ParseResult(string json)

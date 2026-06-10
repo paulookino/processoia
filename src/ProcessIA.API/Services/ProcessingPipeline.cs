@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using ProcessIA.API.Data;
 using ProcessIA.API.Models;
 
@@ -6,8 +5,8 @@ namespace ProcessIA.API.Services;
 
 public class ProcessingPipeline(
     AppDbContext db,
-    BlobStorageService blob,
-    OcrService ocr,
+    TempFileService files,
+    PdfTextExtractor extractor,
     AiAnalysisService ai,
     ILogger<ProcessingPipeline> logger)
 {
@@ -21,18 +20,15 @@ public class ProcessingPipeline(
 
         try
         {
-            logger.LogInformation("Starting pipeline for process {Id}", processId);
+            logger.LogInformation("Starting pipeline for {Id}", processId);
 
-            var blobName = ExtractBlobName(process.BlobUrl);
-            var signedUrl = blob.GetSignedUrl(blobName, TimeSpan.FromMinutes(10));
+            var text = await extractor.ExtractAsync(process.FilePath);
+            logger.LogInformation("Text extraction done for {Id}: {Chars} chars", processId, text.Length);
 
-            var extractedText = await ocr.ExtractTextAsync(signedUrl);
-            logger.LogInformation("OCR complete for {Id}: {Chars} chars extracted", processId, extractedText.Length);
+            var analysis = await ai.AnalyzeAsync(text);
+            logger.LogInformation("AI analysis done for {Id}, risk: {Risk}", processId, analysis.RiskLevel);
 
-            var analysis = await ai.AnalyzeAsync(extractedText);
-            logger.LogInformation("AI analysis complete for {Id}, risk: {Risk}", processId, analysis.RiskLevel);
-
-            var report = new Report
+            db.Reports.Add(new Report
             {
                 ProcessId = processId,
                 Parties = analysis.Parties,
@@ -42,30 +38,22 @@ public class ProcessingPipeline(
                 NextDeadlines = analysis.NextDeadlines,
                 RiskLevel = analysis.RiskLevel,
                 RiskJustification = analysis.RiskJustification,
-                RawExtractedText = extractedText
-            };
+                RawExtractedText = text
+            });
 
             process.Status = ProcessStatus.Done;
             process.ProcessedAt = DateTime.UtcNow;
-
-            db.Reports.Add(report);
             await db.SaveChangesAsync();
 
-            logger.LogInformation("Pipeline complete for process {Id}", processId);
+            files.Delete(process.FilePath);
+            logger.LogInformation("Pipeline complete for {Id}", processId);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Pipeline failed for process {Id}", processId);
-
+            logger.LogError(ex, "Pipeline failed for {Id}", processId);
             process.Status = ProcessStatus.Failed;
             process.ErrorMessage = ex.Message;
             await db.SaveChangesAsync();
         }
-    }
-
-    private static string ExtractBlobName(string blobUrl)
-    {
-        var uri = new Uri(blobUrl);
-        return uri.AbsolutePath.TrimStart('/').Split('/', 2)[1];
     }
 }

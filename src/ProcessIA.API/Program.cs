@@ -8,7 +8,6 @@ using Microsoft.IdentityModel.Tokens;
 using ProcessIA.API.Data;
 using ProcessIA.API.Models;
 using ProcessIA.API.Services;
-using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,16 +49,16 @@ builder.Services.AddHangfire(config =>
     config.UsePostgreSqlStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHangfireServer();
 
-// Stripe
-StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
-
 // App Services
-builder.Services.AddScoped<BlobStorageService>();
-builder.Services.AddScoped<OcrService>();
+builder.Services.AddSingleton<TempFileService>();
+builder.Services.AddScoped<PdfTextExtractor>();
 builder.Services.AddScoped<AiAnalysisService>();
 builder.Services.AddScoped<ProcessingPipeline>();
 
 builder.Services.AddControllers();
+
+builder.Services.AddCors(opt =>
+    opt.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
 var app = builder.Build();
 
@@ -70,6 +69,7 @@ using (var scope = app.Services.CreateScope())
     await dbContext.Database.MigrateAsync();
 }
 
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -79,5 +79,4 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 });
 
 app.MapControllers();
-
 app.Run();
