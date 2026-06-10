@@ -1,13 +1,18 @@
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using ProcessIA.API.Models;
 
 namespace ProcessIA.API.Services;
 
+/// <summary>
+/// Analisa documentos jurídicos usando Groq (se configurado) ou o analisador local.
+/// Sem chave configurada: análise por padrões léxicos do direito brasileiro.
+/// Com Groq__ApiKey: Llama 3.3 70B via Groq (grátis, 14.400 req/dia).
+/// </summary>
 public class AiAnalysisService(IConfiguration config, ILogger<AiAnalysisService> logger)
 {
     private static readonly HttpClient Http = new();
+    private readonly LegalDocumentAnalyzer _localAnalyzer = new();
 
     private const string SystemPrompt = """
         You are a Brazilian legal document analyst with 20 years of experience.
@@ -40,25 +45,33 @@ public class AiAnalysisService(IConfiguration config, ILogger<AiAnalysisService>
 
     public async Task<AnalysisResult> AnalyzeAsync(string extractedText)
     {
-        var json = await CallGroqAsync($"Analyze this legal process:\n\n{extractedText}");
+        var groqKey = config["Groq:ApiKey"];
+
+        if (string.IsNullOrWhiteSpace(groqKey))
+        {
+            logger.LogInformation("Groq key not configured — using local rule-based analyzer.");
+            return _localAnalyzer.Analyze(extractedText);
+        }
+
+        logger.LogInformation("Using Groq (Llama 3.3 70B) for analysis.");
+        var json = await CallGroqAsync(extractedText, groqKey);
 
         try
         {
-            return ParseResult(json);
+            return ParseGroqResult(json);
         }
         catch (JsonException)
         {
             logger.LogWarning("Groq returned invalid JSON. Retrying.");
             var retry = await CallGroqAsync(
-                $"Return ONLY a raw JSON object, no markdown, no explanation. Analyze:\n\n{extractedText}");
-            return ParseResult(retry);
+                $"Return ONLY a raw JSON object, no markdown, no explanation. Analyze:\n\n{extractedText}",
+                groqKey);
+            return ParseGroqResult(retry);
         }
     }
 
-    private async Task<string> CallGroqAsync(string userMessage)
+    private static async Task<string> CallGroqAsync(string userMessage, string apiKey)
     {
-        var apiKey = config["Groq:ApiKey"]!;
-
         var body = JsonSerializer.Serialize(new
         {
             model = "llama-3.3-70b-versatile",
@@ -66,11 +79,12 @@ public class AiAnalysisService(IConfiguration config, ILogger<AiAnalysisService>
             messages = new[]
             {
                 new { role = "system", content = SystemPrompt },
-                new { role = "user", content = userMessage }
+                new { role = "user", content = $"Analyze this legal process:\n\n{userMessage}" }
             }
         });
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.groq.com/openai/v1/chat/completions");
+        using var request = new HttpRequestMessage(HttpMethod.Post,
+            "https://api.groq.com/openai/v1/chat/completions");
         request.Headers.Add("Authorization", $"Bearer {apiKey}");
         request.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
@@ -85,7 +99,7 @@ public class AiAnalysisService(IConfiguration config, ILogger<AiAnalysisService>
             .GetString()!;
     }
 
-    private static AnalysisResult ParseResult(string json)
+    private static AnalysisResult ParseGroqResult(string json)
     {
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
