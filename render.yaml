@@ -20,7 +20,7 @@ services:
         value: processiaapp
       - key: Jwt__Audience
         value: processiaapp
-      - key: Anthropic__ApiKey
+      - key: Groq__ApiKey
         sync: false
 
 databases:

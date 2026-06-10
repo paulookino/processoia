@@ -40,7 +40,7 @@ public class AiAnalysisService(IConfiguration config, ILogger<AiAnalysisService>
 
     public async Task<AnalysisResult> AnalyzeAsync(string extractedText)
     {
-        var json = await CallClaudeAsync($"Analyze this legal process:\n\n{extractedText}");
+        var json = await CallGroqAsync($"Analyze this legal process:\n\n{extractedText}");
 
         try
         {
@@ -48,31 +48,30 @@ public class AiAnalysisService(IConfiguration config, ILogger<AiAnalysisService>
         }
         catch (JsonException)
         {
-            logger.LogWarning("Claude returned invalid JSON. Retrying.");
-            var retry = await CallClaudeAsync(
+            logger.LogWarning("Groq returned invalid JSON. Retrying.");
+            var retry = await CallGroqAsync(
                 $"Return ONLY a raw JSON object, no markdown, no explanation. Analyze:\n\n{extractedText}");
             return ParseResult(retry);
         }
     }
 
-    private async Task<string> CallClaudeAsync(string userMessage)
+    private async Task<string> CallGroqAsync(string userMessage)
     {
-        var apiKey = config["Anthropic:ApiKey"]!;
+        var apiKey = config["Groq:ApiKey"]!;
 
         var body = JsonSerializer.Serialize(new
         {
-            model = "claude-haiku-4-5-20251001",
+            model = "llama-3.3-70b-versatile",
             max_tokens = 2048,
-            system = SystemPrompt,
             messages = new[]
             {
+                new { role = "system", content = SystemPrompt },
                 new { role = "user", content = userMessage }
             }
         });
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
-        request.Headers.Add("x-api-key", apiKey);
-        request.Headers.Add("anthropic-version", "2023-06-01");
+        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.groq.com/openai/v1/chat/completions");
+        request.Headers.Add("Authorization", $"Bearer {apiKey}");
         request.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
         var response = await Http.SendAsync(request);
@@ -80,8 +79,9 @@ public class AiAnalysisService(IConfiguration config, ILogger<AiAnalysisService>
 
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         return doc.RootElement
-            .GetProperty("content")[0]
-            .GetProperty("text")
+            .GetProperty("choices")[0]
+            .GetProperty("message")
+            .GetProperty("content")
             .GetString()!;
     }
 
