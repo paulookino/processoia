@@ -27,22 +27,27 @@ builder.Services.AddIdentity<User, IdentityRole>(opt =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// JWT
+// JWT — deve vir APÓS AddIdentity para sobrescrever DefaultChallengeScheme (cookies → JWT)
 var jwtSecret = builder.Configuration["Jwt:Secret"]!;
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(opt =>
+builder.Services.AddAuthentication(opt =>
+{
+    opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    opt.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
+    opt.DefaultScheme             = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(opt =>
+{
+    opt.TokenValidationParameters = new TokenValidationParameters
     {
-        opt.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
-        };
-    });
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+    };
+});
 
 builder.Services.AddAuthorization();
 
