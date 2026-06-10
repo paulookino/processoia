@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: processiadb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: src/ProcessIA.API/Dockerfile
+    ports:
+      - "5001:8080"
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=processiadb;Username=postgres;Password=postgres"
+      Jwt__Secret: "TROQUE_POR_UMA_CHAVE_SECRETA_DE_32_CHARS_MINIMO"
+      Jwt__Issuer: "processiaapp"
+      Jwt__Audience: "processiaapp"
+      Anthropic__ApiKey: "${ANTHROPIC_API_KEY}"
+      Azure__BlobStorage__ConnectionString: "${AZURE_BLOB_CONNECTION_STRING}"
+      Azure__BlobStorage__ContainerName: "processos"
+      Azure__DocumentIntelligence__Endpoint: "${AZURE_DOC_INTELLIGENCE_ENDPOINT}"
+      Azure__DocumentIntelligence__ApiKey: "${AZURE_DOC_INTELLIGENCE_KEY}"
+      Stripe__SecretKey: "${STRIPE_SECRET_KEY}"
+      Stripe__WebhookSecret: "${STRIPE_WEBHOOK_SECRET}"
+    depends_on:
+      - postgres
+
+  web:
+    build:
+      context: .
+      dockerfile: src/ProcessIA.Web/Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      Api__BaseUrl: "http://api:8080"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

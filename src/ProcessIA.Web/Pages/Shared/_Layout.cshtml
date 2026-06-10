@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ViewData["Title"] — ProcessIA</title>
+  <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/dashboard" class="logo">Process<span>IA</span></a>
+    <div class="nav-links">
+      @if (Context.Session.GetString("jwt") != null)
+      {
+        <span class="nav-email">@Context.Session.GetString("email")</span>
+        <a href="/dashboard" class="nav-link">Processos</a>
+        <a href="/upload" class="nav-link">Enviar</a>
+        <a href="/auth/logout" class="nav-link nav-link--muted">Sair</a>
+      }
+    </div>
+  </nav>
+
+  <main class="main">
+    @RenderBody()
+  </main>
+
+  <footer class="footer">
+    ProcessIA &mdash; Análise automatizada de processos jurídicos
+  </footer>
+
+  @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

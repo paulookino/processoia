@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProcessIA — Análise de processos jurídicos em minutos</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --dark: #0f1117;
+      --dark2: #1a1d2e;
+      --accent: #4f6ef7;
+      --accent2: #6c8aff;
+      --text: #e8eaf6;
+      --muted: #8b93b8;
+      --border: #2a2d3e;
+      --card: #161927;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* NAV */
+    nav {
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+
+    .logo span { color: var(--accent2); }
+
+    .badge {
+      background: rgba(79, 110, 247, 0.15);
+      color: var(--accent2);
+      border: 1px solid rgba(79, 110, 247, 0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    /* HERO */
+    .hero {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 100px 40px 80px;
+      text-align: center;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      background: rgba(79, 110, 247, 0.1);
+      color: var(--accent2);
+      border: 1px solid rgba(79, 110, 247, 0.2);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 28px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      margin-bottom: 24px;
+      color: #fff;
+    }
+
+    h1 span {
+      background: linear-gradient(135deg, var(--accent2), #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 560px;
+      margin: 0 auto 48px;
+    }
+
+    /* FORM */
+    .form-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 520px;
+      margin: 0 auto;
+      text-align: left;
+    }
+
+    .form-card h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .form-card p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    input, select {
+      width: 100%;
+      background: var(--dark2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    input::placeholder { color: var(--muted); opacity: 0.5; }
+
+    select option { background: var(--dark2); }
+
+    .btn {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+
+    .btn:hover { background: var(--accent2); }
+
+    .form-note {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 14px;
+    }
+
+    /* PROBLEM */
+    .section {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 80px 40px;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent2);
+      margin-bottom: 16px;
+    }
+
+    .section h2 {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+
+    .section > p {
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 560px;
+      margin-bottom: 48px;
+    }
+
+    .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .pain-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+    }
+
+    .pain-icon {
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+    }
+
+    .pain-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .pain-card p {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    /* HOW IT WORKS */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .step {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      background: rgba(79, 110, 247, 0.15);
+      border: 1px solid rgba(79, 110, 247, 0.3);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: var(--accent2);
+    }
+
+    .step h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .step p {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    /* REPORT */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 48px;
+    }
+
+    .report-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .report-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent2);
+      border-radius: 50%;
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+
+    .report-item h4 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .report-item p {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* WHO */
+    .who-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 48px;
+    }
+
+    .who-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .who-card .icon { font-size: 2rem; margin-bottom: 12px; }
+
+    .who-card h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .who-card p {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* PRICING */
+    .pricing-note {
+      background: rgba(79, 110, 247, 0.08);
+      border: 1px solid rgba(79, 110, 247, 0.2);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      margin-top: 48px;
+    }
+
+    .pricing-note h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent2);
+      margin-bottom: 8px;
+    }
+
+    .pricing-note p {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .price {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      margin: 12px 0;
+    }
+
+    .price span { font-size: 1rem; font-weight: 400; color: var(--muted); }
+
+    /* CTA FINAL */
+    .cta-section {
+      text-align: center;
+      padding: 80px 40px;
+      border-top: 1px solid var(--border);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .cta-section h2 {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+
+    .cta-section p {
+      color: var(--muted);
+      margin-bottom: 40px;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 32px 40px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 600px) {
+      nav { padding: 16px 20px; }
+      .hero { padding: 60px 20px 60px; }
+      .form-card { padding: 28px 20px; }
+      .section { padding: 60px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <div style="border-bottom: 1px solid var(--border);">
+    <nav>
+      <div class="logo">Process<span>IA</span></div>
+      <div class="badge">Em breve</div>
+    </nav>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">Inteligência Artificial Jurídica</div>
+    <h1>Analise processos jurídicos em <span>minutos</span>, não em horas</h1>
+    <p>
+      Envie o PDF escaneado. Nossa IA lê, extrai e entrega um relatório estruturado —
+      partes, valores, decisões, prazos e nível de risco.
+    </p>
+
+    <!-- FORM -->
+    <div class="form-card">
+      <h2>Quero acesso antecipado</h2>
+      <p>Seja um dos primeiros a testar. Acesso gratuito por 30 dias no lançamento.</p>
+
+      <form action="https://formspree.io/f/SEU_ID_AQUI" method="POST">
+        <div class="form-group">
+          <label>Nome</label>
+          <input type="text" name="nome" placeholder="Seu nome" required />
+        </div>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" name="email" placeholder="seu@email.com" required />
+        </div>
+        <div class="form-group">
+          <label>Tipo de organização</label>
+          <select name="tipo">
+            <option value="">Selecione...</option>
+            <option value="escritorio">Escritório de advocacia</option>
+            <option value="empresa">Departamento jurídico de empresa</option>
+            <option value="recuperadora">Recuperadora de crédito</option>
+            <option value="seguradora">Seguradora</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Quantos processos por mês?</label>
+          <select name="volume">
+            <option value="">Selecione...</option>
+            <option value="ate10">Até 10</option>
+            <option value="10a50">10 a 50</option>
+            <option value="50a200">50 a 200</option>
+            <option value="200mais">Mais de 200</option>
+          </select>
+        </div>
+        <button type="submit" class="btn">Quero acesso antecipado →</button>
+        <p class="form-note">Sem spam. Você recebe apenas o aviso de lançamento.</p>
+      </form>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- PROBLEMA -->
+  <div class="section">
+    <div class="section-label">O problema</div>
+    <h2>Leitura manual de processos custa caro demais</h2>
+    <p>Cada processo pode ter centenas de páginas. Extrair as informações certas consome horas, aumenta o risco de erro e atrasa decisões críticas.</p>
+
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="pain-icon">⏱️</div>
+        <h3>Horas perdidas por processo</h3>
+        <p>Advogados e assistentes gastam horas lendo páginas para extrair informações que deveriam estar prontas em minutos.</p>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">⚠️</div>
+        <h3>Risco de erro humano</h3>
+        <p>Prazo perdido, valor errado, parte equivocada. Processos longos aumentam a chance de falha na leitura manual.</p>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">📂</div>
+        <h3>Volume que não para de crescer</h3>
+        <p>Empresas com alto contencioso acumulam processos mais rápido do que a equipe consegue analisar.</p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- COMO FUNCIONA -->
+  <div class="section">
+    <div class="section-label">Como funciona</div>
+    <h2>Três passos. Relatório pronto.</h2>
+    <p>Sem treinamento, sem configuração, sem complicação.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <div>
+          <h3>Envie o PDF</h3>
+          <p>Faça upload do processo escaneado — físico digitalizado ou direto do tribunal. Qualquer qualidade de scan.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <div>
+          <h3>IA analisa</h3>
+          <p>Nossa IA lê todas as páginas, identifica as informações relevantes e estrutura o conteúdo automaticamente.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <div>
+          <h3>Relatório pronto</h3>
+          <p>Receba um relatório estruturado em minutos. Visualize na plataforma ou exporte em PDF.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- RELATÓRIO -->
+  <div class="section">
+    <div class="section-label">O relatório</div>
+    <h2>Tudo que você precisa saber. Sem ler uma página.</h2>
+    <p>Cada análise entrega um relatório completo com as informações que realmente importam.</p>
+
+    <div class="report-grid">
+      <div class="report-item">
+        <div class="report-dot"></div>
+        <div>
+          <h4>Partes envolvidas</h4>
+          <p>Autor, réu, advogados e representantes identificados automaticamente.</p>
+        </div>
+      </div>
+      <div class="report-item">
+        <div class="report-dot"></div>
+        <div>
+          <h4>Valor da causa</h4>
+          <p>Valor atribuído, pedidos e estimativas de condenação extraídos do processo.</p>
+        </div>
+      </div>
+      <div class="report-item">
+        <div class="report-dot"></div>
+        <div>
+          <h4>Fase processual</h4>
+          <p>Em que etapa o processo está e qual é o histórico de movimentações.</p>
+        </div>
+      </div>
+      <div class="report-item">
+        <div class="report-dot"></div>
+        <div>
+          <h4>Última decisão</h4>
+          <p>O que o juiz decidiu, em linguagem clara e sem juridiquês.</p>
+        </div>
+      </div>
+      <div class="report-item">
+        <div class="report-dot"></div>
+        <div>
+          <h4>Próximos prazos</h4>
+          <p>Datas críticas e prazo para manifestação identificados e destacados.</p>
+        </div>
+      </div>
+      <div class="report-item">
+        <div class="report-dot"></div>
+        <div>
+          <h4>Nível de risco</h4>
+          <p>Classificação automática: baixo, médio ou alto risco de condenação.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- PARA QUEM -->
+  <div class="section">
+    <div class="section-label">Para quem</div>
+    <h2>Quem mais ganha tempo com ProcessIA</h2>
+
+    <div class="who-grid">
+      <div class="who-card">
+        <div class="icon">⚖️</div>
+        <h3>Escritórios de advocacia</h3>
+        <p>Reduza o tempo de análise e atenda mais clientes com a mesma equipe.</p>
+      </div>
+      <div class="who-card">
+        <div class="icon">🏢</div>
+        <h3>Departamentos jurídicos</h3>
+        <p>Controle seu contencioso sem ampliar o time. Visibilidade total do risco.</p>
+      </div>
+      <div class="who-card">
+        <div class="icon">💳</div>
+        <h3>Recuperadoras de crédito</h3>
+        <p>Analise alto volume de processos e priorize os casos com melhor retorno.</p>
+      </div>
+      <div class="who-card">
+        <div class="icon">🛡️</div>
+        <h3>Seguradoras</h3>
+        <p>Avalie exposição em sinistros litigiosos com velocidade e precisão.</p>
+      </div>
+    </div>
+
+    <div class="pricing-note">
+      <h3>Preço de acesso antecipado</h3>
+      <div class="price">R$297 <span>/ mês</span></div>
+      <p>Análises ilimitadas · Exportação em PDF · Suporte por e-mail · Cancele quando quiser</p>
+    </div>
+  </div>
+
+  <!-- CTA FINAL -->
+  <div class="cta-section">
+    <h2>Pronto para analisar processos em minutos?</h2>
+    <p>Cadastre-se agora e garanta 30 dias grátis no lançamento.</p>
+    <a href="#top" onclick="window.scrollTo({top:0,behavior:'smooth'}); return false;">
+      <button class="btn" style="max-width: 320px; margin: 0 auto; display: block;">
+        Quero acesso antecipado →
+      </button>
+    </a>
+  </div>
+
+  <footer>
+    © 2026 ProcessIA. Todos os direitos reservados.
+  </footer>
+
+</body>
+</html>

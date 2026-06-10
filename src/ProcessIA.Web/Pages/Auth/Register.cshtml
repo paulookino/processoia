@@ -1,0 +1,29 @@
+@page
+@model ProcessIA.Web.Pages.Auth.RegisterModel
+@{ ViewData["Title"] = "Criar conta"; Layout = "_Layout"; }
+
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="logo auth-logo">Process<span>IA</span></div>
+    <h1 class="auth-title">Criar conta</h1>
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+      <div class="alert alert--error">@Model.Error</div>
+    }
+
+    <form method="post">
+      <div class="field">
+        <label>E-mail</label>
+        <input type="email" name="email" required placeholder="seu@email.com" />
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" name="password" required placeholder="Mínimo 8 caracteres" />
+      </div>
+      <button type="submit" class="btn btn--primary btn--full">Criar conta</button>
+    </form>
+
+    <p class="auth-footer">Já tem conta? <a href="/auth/login">Entrar</a></p>
+  </div>
+</div>

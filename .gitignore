@@ -1,0 +1,24 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.swp
+
+## Secrets
+appsettings.Development.json
+appsettings.Production.json
+secrets.json
+
+## Build
+publish/
+artifacts/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Logs
+*.log
+logs/

@@ -1,0 +1,89 @@
+@page "/upload"
+@model ProcessIA.Web.Pages.Upload.UploadModel
+@{ ViewData["Title"] = "Enviar processo"; Layout = "_Layout"; }
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Enviar processo</h1>
+    <p class="page-subtitle">PDF escaneado — até 50MB</p>
+  </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+  <div class="alert alert--error">@Model.Error</div>
+}
+
+<div class="upload-card">
+  <form method="post" enctype="multipart/form-data" id="upload-form">
+    <div class="dropzone" id="dropzone">
+      <div class="dropzone-icon">📄</div>
+      <p class="dropzone-text">Arraste o PDF aqui ou <label for="file-input" class="dropzone-link">clique para selecionar</label></p>
+      <p class="dropzone-hint">Apenas PDF · Máximo 50MB</p>
+      <input type="file" id="file-input" name="file" accept="application/pdf" required hidden />
+    </div>
+
+    <div class="selected-file" id="selected-file" style="display:none">
+      <span class="file-icon">📄</span>
+      <span id="file-name"></span>
+      <span id="file-size" class="text-muted"></span>
+    </div>
+
+    <button type="submit" class="btn btn--primary btn--full" id="submit-btn" disabled>
+      Analisar processo
+    </button>
+  </form>
+
+  <div class="upload-info">
+    <h3>O que você recebe</h3>
+    <ul>
+      <li>✓ Partes envolvidas (autor, réu, advogados)</li>
+      <li>✓ Valor da causa</li>
+      <li>✓ Fase processual atual</li>
+      <li>✓ Última decisão em linguagem clara</li>
+      <li>✓ Próximos prazos</li>
+      <li>✓ Nível de risco (baixo/médio/alto)</li>
+    </ul>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+  const input = document.getElementById('file-input');
+  const dropzone = document.getElementById('dropzone');
+  const selectedFile = document.getElementById('selected-file');
+  const fileName = document.getElementById('file-name');
+  const fileSize = document.getElementById('file-size');
+  const submitBtn = document.getElementById('submit-btn');
+
+  function showFile(file) {
+    fileName.textContent = file.name;
+    fileSize.textContent = `(${(file.size / 1024 / 1024).toFixed(1)} MB)`;
+    selectedFile.style.display = 'flex';
+    dropzone.style.display = 'none';
+    submitBtn.disabled = false;
+  }
+
+  input.addEventListener('change', () => { if (input.files[0]) showFile(input.files[0]); });
+
+  dropzone.addEventListener('click', () => input.click());
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file?.type === 'application/pdf') {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      showFile(file);
+    }
+  });
+
+  document.getElementById('upload-form').addEventListener('submit', () => {
+    submitBtn.textContent = 'Enviando...';
+    submitBtn.disabled = true;
+  });
+</script>
+}

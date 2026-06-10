@@ -1,0 +1,75 @@
+@page
+@model ProcessIA.Web.Pages.Dashboard.IndexModel
+@{ ViewData["Title"] = "Processos"; Layout = "_Layout"; }
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Seus processos</h1>
+    <p class="page-subtitle">@Model.Processes.Count processo(s) enviado(s)</p>
+  </div>
+  <a href="/upload" class="btn btn--primary">+ Enviar processo</a>
+</div>
+
+@if (!Model.Processes.Any())
+{
+  <div class="empty-state">
+    <div class="empty-icon">📄</div>
+    <h2>Nenhum processo ainda</h2>
+    <p>Envie seu primeiro PDF para começar.</p>
+    <a href="/upload" class="btn btn--primary">Enviar processo</a>
+  </div>
+}
+else
+{
+  <div class="table-wrapper">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Arquivo</th>
+          <th>Status</th>
+          <th>Enviado em</th>
+          <th>Processado em</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var p in Model.Processes)
+        {
+          <tr>
+            <td class="td-file">
+              <span class="file-icon">📄</span>
+              <span>@p.FileName</span>
+            </td>
+            <td><span class="badge badge--@p.Status.ToLower()">@p.Status</span></td>
+            <td>@p.UploadedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+            <td>@(p.ProcessedAt.HasValue ? p.ProcessedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</td>
+            <td>
+              @if (p.HasReport)
+              {
+                <a href="/report/@p.Id" class="btn btn--sm btn--secondary">Ver relatório</a>
+              }
+              else if (p.Status == "Processing" || p.Status == "Pending")
+              {
+                <span class="spinner-sm" data-id="@p.Id"></span>
+              }
+              else if (p.Status == "Failed")
+              {
+                <span class="text-error">Falhou</span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@section Scripts {
+<script>
+  // Poll pending/processing processes every 5s
+  const pending = document.querySelectorAll('[data-id]');
+  if (pending.length > 0) {
+    setTimeout(() => location.reload(), 5000);
+  }
+</script>
+}

@@ -1,0 +1,95 @@
+@page "/report/{id:guid}"
+@model ProcessIA.Web.Pages.Report.ReportPageModel
+@{ ViewData["Title"] = "Relatório"; Layout = "_Layout"; }
+
+@if (Model.IsProcessing)
+{
+  <div class="processing-state">
+    <div class="spinner"></div>
+    <h2>Analisando processo...</h2>
+    <p>Nossa IA está lendo e estruturando o documento. Isso leva alguns segundos.</p>
+  </div>
+}
+else if (Model.Failed)
+{
+  <div class="empty-state">
+    <div class="empty-icon">⚠️</div>
+    <h2>Falha na análise</h2>
+    <p>Ocorreu um erro ao processar este documento.</p>
+    <a href="/upload" class="btn btn--primary">Tentar novamente</a>
+  </div>
+}
+else if (Model.Report is not null)
+{
+  var r = Model.Report;
+  var riskClass = r.RiskLevel.ToLower() switch { "high" => "risk--high", "medium" => "risk--medium", _ => "risk--low" };
+  var riskLabel = r.RiskLevel switch { "High" => "ALTO", "Medium" => "MÉDIO", _ => "BAIXO" };
+
+  <div class="report-header">
+    <div>
+      <h1 class="page-title">@r.FileName</h1>
+      <p class="page-subtitle">Análise gerada em @r.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy às HH:mm")</p>
+    </div>
+    <a href="/api/reports/@r.ProcessId/pdf" class="btn btn--secondary" target="_blank">⬇ Baixar PDF</a>
+  </div>
+
+  <div class="report-grid">
+
+    <div class="report-card">
+      <h3 class="card-title">Partes envolvidas</h3>
+      <div class="field-list">
+        <div class="field-item"><span class="field-label">Autor</span><span>@(r.Parties.TryGetProperty("plaintiff", out var p) ? p.GetString() : "—")</span></div>
+        <div class="field-item"><span class="field-label">Réu</span><span>@(r.Parties.TryGetProperty("defendant", out var d) ? d.GetString() : "—")</span></div>
+        <div class="field-item"><span class="field-label">Adv. Autor</span><span>@(r.Parties.TryGetProperty("plaintiff_lawyer", out var pl) && pl.ValueKind != System.Text.Json.JsonValueKind.Null ? pl.GetString() : "—")</span></div>
+        <div class="field-item"><span class="field-label">Adv. Réu</span><span>@(r.Parties.TryGetProperty("defendant_lawyer", out var dl) && dl.ValueKind != System.Text.Json.JsonValueKind.Null ? dl.GetString() : "—")</span></div>
+      </div>
+    </div>
+
+    <div class="report-card">
+      <h3 class="card-title">Informações</h3>
+      <div class="field-list">
+        <div class="field-item"><span class="field-label">Valor da causa</span><span>@(r.CaseValue.HasValue ? $"R$ {r.CaseValue.Value:N2}" : "Não identificado")</span></div>
+        <div class="field-item"><span class="field-label">Fase atual</span><span>@r.CurrentPhase</span></div>
+      </div>
+    </div>
+
+    <div class="report-card report-card--full">
+      <h3 class="card-title">Última decisão</h3>
+      <p class="decision-text">@r.LastDecision</p>
+    </div>
+
+    <div class="report-card">
+      <h3 class="card-title">Próximos prazos</h3>
+      @{
+        var deadlines = r.NextDeadlines.EnumerateArray().Select(d => d.GetString()).Where(d => d != null).ToList();
+      }
+      @if (deadlines.Any())
+      {
+        <ul class="deadline-list">
+          @foreach (var dl in deadlines)
+          {
+            <li>@dl</li>
+          }
+        </ul>
+      }
+      else
+      {
+        <p class="text-muted">Nenhum prazo identificado.</p>
+      }
+    </div>
+
+    <div class="report-card risk-card @riskClass">
+      <h3 class="card-title">Nível de risco</h3>
+      <div class="risk-badge">@riskLabel</div>
+      <p class="risk-justification">@r.RiskJustification</p>
+    </div>
+
+  </div>
+}
+
+@section Scripts {
+@if (Model.IsProcessing)
+{
+  <script>setTimeout(() => location.reload(), 4000);</script>
+}
+}
