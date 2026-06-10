@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProcessIA — Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --dark: #0f1117; --dark2: #1a1d2e; --accent: #4f6ef7; --accent2: #6c8aff;
+      --text: #e8eaf6; --muted: #8b93b8; --border: #2a2d3e; --card: #161927;
+      --error: #f87171; --success: #4ade80; --warn: #fbbf24;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--dark); color: var(--text); min-height: 100vh; }
+    nav { padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .logo { font-size: 1.2rem; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+    .logo span { color: var(--accent2); }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .user-email { font-size: 0.85rem; color: var(--muted); }
+    .btn-logout { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; padding: 6px 14px; font-size: 0.8rem; cursor: pointer; }
+    .btn-logout:hover { color: var(--text); border-color: var(--muted); }
+    main { max-width: 900px; margin: 0 auto; padding: 48px 24px; }
+    h1 { font-size: 1.6rem; font-weight: 800; color: #fff; margin-bottom: 6px; }
+    .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 40px; }
+
+    /* UPLOAD ZONE */
+    .upload-zone { border: 2px dashed var(--border); border-radius: 16px; padding: 48px 32px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--card); margin-bottom: 40px; position: relative; }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: var(--accent); background: rgba(79,110,247,0.05); }
+    .upload-icon { font-size: 2.5rem; margin-bottom: 16px; }
+    .upload-zone h2 { font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .upload-zone p { font-size: 0.875rem; color: var(--muted); margin-bottom: 24px; }
+    .btn-upload { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 12px 28px; font-size: 0.95rem; font-weight: 700; cursor: pointer; display: inline-block; }
+    .btn-upload:hover { background: var(--accent2); }
+    #file-input { display: none; }
+    .upload-progress { display: none; margin-top: 16px; }
+    .progress-bar { height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width 0.3s; animation: progress-anim 1.5s infinite; }
+    @keyframes progress-anim { 0%{width:10%} 50%{width:70%} 100%{width:90%} }
+
+    /* PROCESS LIST */
+    .section-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 16px; }
+    .empty-state { text-align: center; padding: 48px 24px; color: var(--muted); }
+    .empty-state p { font-size: 0.9rem; }
+    .process-list { display: flex; flex-direction: column; gap: 12px; }
+    .process-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; display: flex; align-items: center; gap: 16px; transition: border-color 0.2s; }
+    .process-item.clickable { cursor: pointer; }
+    .process-item.clickable:hover { border-color: var(--accent); }
+    .process-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .process-info { flex: 1; min-width: 0; }
+    .process-name { font-size: 0.95rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+    .process-meta { font-size: 0.78rem; color: var(--muted); }
+    .status-badge { flex-shrink: 0; padding: 4px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; }
+    .status-Pending { background: rgba(251,191,36,0.15); color: var(--warn); border: 1px solid rgba(251,191,36,0.3); }
+    .status-Processing { background: rgba(79,110,247,0.15); color: var(--accent2); border: 1px solid rgba(79,110,247,0.3); animation: pulse 2s infinite; }
+    .status-Completed { background: rgba(74,222,128,0.15); color: var(--success); border: 1px solid rgba(74,222,128,0.3); }
+    .status-Failed { background: rgba(248,113,113,0.15); color: var(--error); border: 1px solid rgba(248,113,113,0.3); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+    .arrow { color: var(--muted); font-size: 1rem; flex-shrink: 0; }
+    .error-banner { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--error); border-radius: 8px; padding: 12px 16px; font-size: 0.875rem; margin-bottom: 16px; display: none; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">Process<span>IA</span></div>
+    <div class="nav-right">
+      <span class="user-email" id="user-email"></span>
+      <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+  </nav>
+
+  <main>
+    <h1>Meus Processos</h1>
+    <p class="subtitle">Envie um PDF para análise automática.</p>
+
+    <div id="error-banner" class="error-banner"></div>
+
+    <!-- UPLOAD ZONE -->
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()"
+      ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+      <div class="upload-icon">📄</div>
+      <h2>Envie o PDF do processo</h2>
+      <p>Arraste o arquivo aqui ou clique para selecionar<br><small>PDF até 50MB</small></p>
+      <button class="btn-upload" onclick="event.stopPropagation(); document.getElementById('file-input').click()">Selecionar PDF</button>
+      <input type="file" id="file-input" accept="application/pdf" onchange="handleFile(this.files[0])" />
+      <div class="upload-progress" id="upload-progress">
+        <p style="color:var(--accent2);font-size:0.875rem;font-weight:600;">Enviando e processando...</p>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- PROCESS LIST -->
+    <div class="section-title">Histórico</div>
+    <div id="process-list">
+      <div class="empty-state"><p>Nenhum processo enviado ainda.</p></div>
+    </div>
+  </main>
+
+  <script>
+    const API = 'https://processoia.onrender.com';
+    let pollInterval = null;
+
+    // Auth guard
+    const token = localStorage.getItem('pia_token');
+    if (!token) location.href = 'auth.html';
+    document.getElementById('user-email').textContent = localStorage.getItem('pia_email') || '';
+
+    function logout() {
+      localStorage.removeItem('pia_token');
+      localStorage.removeItem('pia_email');
+      location.href = 'auth.html';
+    }
+
+    function authHeaders() {
+      return { 'Authorization': `Bearer ${localStorage.getItem('pia_token')}` };
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-banner');
+      el.textContent = msg; el.style.display = '';
+      setTimeout(() => el.style.display = 'none', 6000);
+    }
+
+    // DRAG & DROP
+    function onDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('drag-over'); }
+    function onDragLeave(e) { document.getElementById('upload-zone').classList.remove('drag-over'); }
+    function onDrop(e) { e.preventDefault(); onDragLeave(e); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }
+
+    async function handleFile(file) {
+      if (!file) return;
+      if (file.type !== 'application/pdf') { showError('Apenas arquivos PDF são aceitos.'); return; }
+      if (file.size > 50 * 1024 * 1024) { showError('Arquivo muito grande. Limite: 50MB.'); return; }
+
+      document.getElementById('upload-progress').style.display = '';
+      document.getElementById('upload-zone').style.pointerEvents = 'none';
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch(`${API}/api/processes/upload`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: formData
+        });
+
+        if (res.status === 401) { logout(); return; }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro ao enviar arquivo.');
+
+        document.getElementById('upload-progress').style.display = 'none';
+        document.getElementById('upload-zone').style.pointerEvents = '';
+        document.getElementById('file-input').value = '';
+        loadProcesses();
+      } catch (err) {
+        showError(err.message);
+        document.getElementById('upload-progress').style.display = 'none';
+        document.getElementById('upload-zone').style.pointerEvents = '';
+      }
+    }
+
+    function statusLabel(s) {
+      return { Pending: 'Aguardando', Processing: 'Analisando...', Completed: 'Concluído', Failed: 'Falhou' }[s] || s;
+    }
+
+    function formatDate(iso) {
+      return new Date(iso).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024*1024) return `${(bytes/1024).toFixed(0)} KB`;
+      return `${(bytes/1024/1024).toFixed(1)} MB`;
+    }
+
+    async function loadProcesses() {
+      try {
+        const res = await fetch(`${API}/api/processes`, { headers: authHeaders() });
+        if (res.status === 401) { logout(); return; }
+        const processes = await res.json();
+
+        const container = document.getElementById('process-list');
+
+        if (!processes.length) {
+          container.innerHTML = '<div class="empty-state"><p>Nenhum processo enviado ainda.</p></div>';
+          return;
+        }
+
+        container.innerHTML = processes.map(p => `
+          <div class="process-item ${p.hasReport ? 'clickable' : ''}"
+               ${p.hasReport ? `onclick="location.href='report.html?id=${p.id}'"` : ''}>
+            <div class="process-icon">📋</div>
+            <div class="process-info">
+              <div class="process-name">${p.fileName}</div>
+              <div class="process-meta">${formatSize(p.fileSizeBytes)} · ${formatDate(p.uploadedAt)}</div>
+            </div>
+            <span class="status-badge status-${p.status}">${statusLabel(p.status)}</span>
+            ${p.hasReport ? '<span class="arrow">→</span>' : ''}
+          </div>
+        `).join('');
+
+        // Polling se tem processo em andamento
+        const hasActive = processes.some(p => p.status === 'Pending' || p.status === 'Processing');
+        if (hasActive && !pollInterval) {
+          pollInterval = setInterval(loadProcesses, 4000);
+        } else if (!hasActive && pollInterval) {
+          clearInterval(pollInterval);
+          pollInterval = null;
+        }
+      } catch (err) {
+        showError('Erro ao carregar processos.');
+      }
+    }
+
+    loadProcesses();
+  </script>
+</body>
+</html>

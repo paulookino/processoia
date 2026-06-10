@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProcessIA — Relatório</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --dark: #0f1117; --dark2: #1a1d2e; --accent: #4f6ef7; --accent2: #6c8aff;
+      --text: #e8eaf6; --muted: #8b93b8; --border: #2a2d3e; --card: #161927;
+      --error: #f87171; --success: #4ade80; --warn: #fbbf24;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--dark); color: var(--text); min-height: 100vh; }
+    nav { padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .logo { font-size: 1.2rem; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+    .logo span { color: var(--accent2); }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .btn-back { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 6px; padding: 6px 14px; font-size: 0.8rem; cursor: pointer; text-decoration: none; }
+    .btn-back:hover { color: var(--text); }
+    main { max-width: 860px; margin: 0 auto; padding: 40px 24px; }
+    .loading { text-align: center; padding: 80px; color: var(--muted); }
+    .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* HEADER DO RELATÓRIO */
+    .report-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; }
+    .report-title h1 { font-size: 1.4rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+    .report-title p { font-size: 0.85rem; color: var(--muted); }
+    .risk-badge { padding: 8px 20px; border-radius: 99px; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
+    .risk-Low { background: rgba(74,222,128,0.15); color: var(--success); border: 1px solid rgba(74,222,128,0.3); }
+    .risk-Medium { background: rgba(251,191,36,0.15); color: var(--warn); border: 1px solid rgba(251,191,36,0.3); }
+    .risk-High { background: rgba(248,113,113,0.15); color: var(--error); border: 1px solid rgba(248,113,113,0.3); }
+    .btn-pdf { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.875rem; font-weight: 700; cursor: pointer; }
+    .btn-pdf:hover { background: var(--accent2); }
+
+    /* GRID DE CARDS */
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+    .card-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 10px; }
+    .card-value { font-size: 1rem; font-weight: 600; color: #fff; line-height: 1.4; }
+    .card-sub { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+    .case-value { font-size: 1.6rem; font-weight: 800; color: var(--accent2); }
+    .party-row { margin-bottom: 10px; }
+    .party-row:last-child { margin-bottom: 0; }
+    .party-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 2px; }
+    .party-name { font-size: 0.95rem; font-weight: 600; color: #fff; }
+
+    /* DECISÃO */
+    .decision-card { background: rgba(79,110,247,0.05); border: 1px solid rgba(79,110,247,0.2); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+    .decision-card .card-label { color: var(--accent2); }
+    .decision-text { font-size: 0.95rem; color: var(--text); line-height: 1.7; }
+
+    /* PRAZOS */
+    .deadlines-list { list-style: none; }
+    .deadlines-list li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.875rem; color: var(--text); }
+    .deadlines-list li:last-child { border-bottom: none; }
+    .deadlines-list li::before { content: '📅'; font-size: 1rem; flex-shrink: 0; }
+
+    /* RISCO */
+    .risk-card { display: flex; align-items: flex-start; gap: 16px; }
+    .risk-icon { font-size: 2rem; flex-shrink: 0; }
+
+    @media (max-width: 600px) {
+      nav { padding: 16px 20px; }
+      main { padding: 24px 16px; }
+      .report-header { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">Process<span>IA</span></div>
+    <div class="nav-right">
+      <a href="dashboard.html" class="btn-back">← Voltar</a>
+    </div>
+  </nav>
+
+  <main id="main">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Carregando relatório...</p>
+    </div>
+  </main>
+
+  <script>
+    const API = 'https://processoia.onrender.com';
+
+    const token = localStorage.getItem('pia_token');
+    if (!token) location.href = 'auth.html';
+
+    const params = new URLSearchParams(location.search);
+    const processId = params.get('id');
+    if (!processId) location.href = 'dashboard.html';
+
+    function authHeaders() {
+      return { 'Authorization': `Bearer ${token}` };
+    }
+
+    function riskLabel(r) {
+      return { Low: '✅ Risco Baixo', Medium: '⚠️ Risco Médio', High: '🔴 Risco Alto' }[r] || r;
+    }
+
+    function formatCurrency(val) {
+      if (!val && val !== 0) return '—';
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    }
+
+    async function downloadPdf() {
+      try {
+        const res = await fetch(`${API}/api/reports/${processId}/pdf`, { headers: authHeaders() });
+        if (!res.ok) throw new Error('Erro ao gerar PDF.');
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `relatorio-${processId}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function loadReport() {
+      try {
+        const res = await fetch(`${API}/api/reports/${processId}`, { headers: authHeaders() });
+        if (res.status === 401) { location.href = 'auth.html'; return; }
+        if (res.status === 404) { document.getElementById('main').innerHTML = '<div class="loading"><p>Relatório não encontrado. O processo ainda pode estar sendo analisado.</p><br><a href="dashboard.html" style="color:var(--accent2);">← Voltar ao dashboard</a></div>'; return; }
+
+        const r = await res.json();
+        const parties = r.parties || {};
+        const deadlines = r.nextDeadlines || [];
+
+        document.title = `ProcessIA — ${r.fileName}`;
+
+        document.getElementById('main').innerHTML = `
+          <!-- HEADER -->
+          <div class="report-header">
+            <div class="report-title">
+              <h1>${r.fileName}</h1>
+              <p>Gerado em ${formatDate(r.createdAt)}</p>
+            </div>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+              <span class="risk-badge risk-${r.riskLevel}">${riskLabel(r.riskLevel)}</span>
+              <button class="btn-pdf" onclick="downloadPdf()">⬇ Exportar PDF</button>
+            </div>
+          </div>
+
+          <!-- PARTES + FASE + VALOR -->
+          <div class="cards-grid">
+            <div class="card">
+              <div class="card-label">Partes</div>
+              <div class="party-row">
+                <div class="party-label">Autor / Requerente</div>
+                <div class="party-name">${parties.plaintiff || '—'}</div>
+              </div>
+              <div class="party-row">
+                <div class="party-label">Réu / Requerido</div>
+                <div class="party-name">${parties.defendant || '—'}</div>
+              </div>
+              ${parties.plaintiff_lawyer ? `<div class="party-row"><div class="party-label">Advogado Autor</div><div class="party-name" style="font-size:0.85rem">${parties.plaintiff_lawyer}</div></div>` : ''}
+              ${parties.defendant_lawyer ? `<div class="party-row"><div class="party-label">Advogado Réu</div><div class="party-name" style="font-size:0.85rem">${parties.defendant_lawyer}</div></div>` : ''}
+            </div>
+
+            <div class="card">
+              <div class="card-label">Valor da Causa</div>
+              <div class="case-value">${formatCurrency(r.caseValue)}</div>
+              <div class="card-label" style="margin-top:20px">Fase Processual</div>
+              <div class="card-value">${r.currentPhase || '—'}</div>
+            </div>
+          </div>
+
+          <!-- ÚLTIMA DECISÃO -->
+          <div class="decision-card">
+            <div class="card-label">Última Decisão</div>
+            <div class="decision-text">${r.lastDecision || '—'}</div>
+          </div>
+
+          <!-- PRAZOS + RISCO -->
+          <div class="cards-grid">
+            <div class="card">
+              <div class="card-label">Próximos Prazos</div>
+              <ul class="deadlines-list">
+                ${(Array.isArray(deadlines) ? deadlines : [deadlines]).map(d => `<li>${d}</li>`).join('') || '<li>Nenhum prazo identificado</li>'}
+              </ul>
+            </div>
+
+            <div class="card">
+              <div class="card-label">Classificação de Risco</div>
+              <div class="risk-card">
+                <div class="risk-icon">${{ Low:'✅', Medium:'⚠️', High:'🔴' }[r.riskLevel] || '❓'}</div>
+                <div>
+                  <div class="card-value">${{ Low:'Baixo', Medium:'Médio', High:'Alto' }[r.riskLevel] || '—'}</div>
+                  <div class="card-sub">${r.riskJustification || '—'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        document.getElementById('main').innerHTML = `<div class="loading"><p style="color:var(--error)">Erro ao carregar relatório: ${err.message}</p><br><a href="dashboard.html" style="color:var(--accent2);">← Voltar</a></div>`;
+      }
+    }
+
+    loadReport();
+  </script>
+</body>
+</html>

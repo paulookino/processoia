@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProcessIA — Entrar</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --dark: #0f1117; --dark2: #1a1d2e; --accent: #4f6ef7; --accent2: #6c8aff;
+      --text: #e8eaf6; --muted: #8b93b8; --border: #2a2d3e; --card: #161927;
+      --error: #f87171; --success: #4ade80;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--dark); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    nav { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .logo { font-size: 1.3rem; font-weight: 700; color: var(--text); letter-spacing: -0.5px; text-decoration: none; }
+    .logo span { color: var(--accent2); }
+    main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 40px; width: 100%; max-width: 420px; }
+    .tabs { display: flex; gap: 0; margin-bottom: 32px; border-bottom: 1px solid var(--border); }
+    .tab { flex: 1; padding: 12px; text-align: center; font-size: 0.9rem; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; }
+    .tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    input { width: 100%; background: var(--dark2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; color: var(--text); font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--muted); opacity: 0.5; }
+    .btn { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 8px; transition: background 0.2s; }
+    .btn:hover { background: var(--accent2); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error-msg { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: var(--error); border-radius: 8px; padding: 12px 16px; font-size: 0.875rem; margin-bottom: 16px; display: none; }
+    .success-msg { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.3); color: var(--success); border-radius: 8px; padding: 12px 16px; font-size: 0.875rem; margin-bottom: 16px; display: none; }
+    .note { font-size: 0.78rem; color: var(--muted); text-align: center; margin-top: 16px; }
+    .note a { color: var(--accent2); text-decoration: none; }
+    footer { text-align: center; padding: 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="logo">Process<span>IA</span></a>
+  </nav>
+
+  <main>
+    <div class="card">
+      <div class="tabs">
+        <div class="tab active" id="tab-login" onclick="showTab('login')">Entrar</div>
+        <div class="tab" id="tab-signup" onclick="showTab('signup')">Criar conta</div>
+      </div>
+
+      <div id="error-msg" class="error-msg"></div>
+      <div id="success-msg" class="success-msg"></div>
+
+      <!-- LOGIN -->
+      <form id="form-login" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" id="login-email" placeholder="seu@email.com" required />
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" id="login-password" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="btn" id="btn-login">Entrar →</button>
+        <p class="note">Não tem conta? <a href="#" onclick="showTab('signup')">Criar conta grátis</a></p>
+      </form>
+
+      <!-- SIGNUP -->
+      <form id="form-signup" style="display:none" onsubmit="handleSignup(event)">
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" id="signup-email" placeholder="seu@email.com" required />
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" id="signup-password" placeholder="Mínimo 8 caracteres, 1 número" required minlength="8" />
+        </div>
+        <button type="submit" class="btn" id="btn-signup">Criar conta →</button>
+        <p class="note">Já tem conta? <a href="#" onclick="showTab('login')">Entrar</a></p>
+      </form>
+    </div>
+  </main>
+
+  <footer>© 2026 ProcessIA</footer>
+
+  <script>
+    const API = 'https://processoia.onrender.com';
+
+    // Redireciona se já autenticado
+    if (localStorage.getItem('pia_token')) location.href = 'dashboard.html';
+
+    // Abre signup se URL tiver #signup
+    if (location.hash === '#signup') showTab('signup');
+
+    function showTab(tab) {
+      document.getElementById('form-login').style.display = tab === 'login' ? '' : 'none';
+      document.getElementById('form-signup').style.display = tab === 'signup' ? '' : 'none';
+      document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+      document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+      clearMsgs();
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.textContent = msg; el.style.display = '';
+      document.getElementById('success-msg').style.display = 'none';
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('success-msg');
+      el.textContent = msg; el.style.display = '';
+      document.getElementById('error-msg').style.display = 'none';
+    }
+
+    function clearMsgs() {
+      document.getElementById('error-msg').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'none';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-login');
+      btn.disabled = true; btn.textContent = 'Entrando...';
+      clearMsgs();
+
+      try {
+        const res = await fetch(`${API}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('login-email').value,
+            password: document.getElementById('login-password').value
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro ao entrar.');
+
+        localStorage.setItem('pia_token', data.token);
+        localStorage.setItem('pia_email', data.email);
+        location.href = 'dashboard.html';
+      } catch (err) {
+        showError(err.message);
+        btn.disabled = false; btn.textContent = 'Entrar →';
+      }
+    }
+
+    async function handleSignup(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-signup');
+      btn.disabled = true; btn.textContent = 'Criando conta...';
+      clearMsgs();
+
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+
+      try {
+        const res = await fetch(`${API}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          const msg = Array.isArray(data) ? data[0] : (data.error || 'Erro ao criar conta.');
+          throw new Error(msg);
+        }
+
+        showSuccess('Conta criada! Fazendo login...');
+
+        // Auto-login
+        const loginRes = await fetch(`${API}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const loginData = await loginRes.json();
+        if (loginRes.ok) {
+          localStorage.setItem('pia_token', loginData.token);
+          localStorage.setItem('pia_email', loginData.email);
+          location.href = 'dashboard.html';
+        } else {
+          showTab('login');
+        }
+      } catch (err) {
+        showError(err.message);
+        btn.disabled = false; btn.textContent = 'Criar conta →';
+      }
+    }
+  </script>
+</body>
+</html>

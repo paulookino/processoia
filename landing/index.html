@@ -433,7 +433,10 @@
   <div style="border-bottom: 1px solid var(--border);">
     <nav>
       <div class="logo">Process<span>IA</span></div>
-      <div class="badge">Em breve</div>
+      <div style="display:flex;gap:12px;align-items:center;">
+        <a href="auth.html" style="color:var(--muted);font-size:0.9rem;text-decoration:none;">Entrar</a>
+        <a href="auth.html#signup" class="btn" style="width:auto;padding:8px 20px;font-size:0.875rem;margin-top:0;display:inline-block;text-decoration:none;">Criar conta grátis</a>
+      </div>
     </nav>
   </div>
 
@@ -442,49 +445,14 @@
     <div class="hero-tag">Inteligência Artificial Jurídica</div>
     <h1>Analise processos jurídicos em <span>minutos</span>, não em horas</h1>
     <p>
-      Envie o PDF escaneado. Nossa IA lê, extrai e entrega um relatório estruturado —
+      Envie o PDF. Nossa IA lê, extrai e entrega um relatório estruturado —
       partes, valores, decisões, prazos e nível de risco.
     </p>
-
-    <!-- FORM -->
-    <div class="form-card">
-      <h2>Quero acesso antecipado</h2>
-      <p>Seja um dos primeiros a testar. Acesso gratuito por 30 dias no lançamento.</p>
-
-      <form action="https://formspree.io/f/SEU_ID_AQUI" method="POST">
-        <div class="form-group">
-          <label>Nome</label>
-          <input type="text" name="nome" placeholder="Seu nome" required />
-        </div>
-        <div class="form-group">
-          <label>E-mail</label>
-          <input type="email" name="email" placeholder="seu@email.com" required />
-        </div>
-        <div class="form-group">
-          <label>Tipo de organização</label>
-          <select name="tipo">
-            <option value="">Selecione...</option>
-            <option value="escritorio">Escritório de advocacia</option>
-            <option value="empresa">Departamento jurídico de empresa</option>
-            <option value="recuperadora">Recuperadora de crédito</option>
-            <option value="seguradora">Seguradora</option>
-            <option value="outro">Outro</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Quantos processos por mês?</label>
-          <select name="volume">
-            <option value="">Selecione...</option>
-            <option value="ate10">Até 10</option>
-            <option value="10a50">10 a 50</option>
-            <option value="50a200">50 a 200</option>
-            <option value="200mais">Mais de 200</option>
-          </select>
-        </div>
-        <button type="submit" class="btn">Quero acesso antecipado →</button>
-        <p class="form-note">Sem spam. Você recebe apenas o aviso de lançamento.</p>
-      </form>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+      <a href="auth.html#signup" class="btn" style="width:auto;padding:14px 32px;font-size:1rem;margin-top:0;display:inline-block;text-decoration:none;">Começar grátis →</a>
+      <a href="auth.html" style="display:inline-flex;align-items:center;padding:14px 32px;color:var(--muted);font-size:0.95rem;text-decoration:none;border:1px solid var(--border);border-radius:8px;">Já tenho conta</a>
     </div>
+    <p style="margin-top:20px;font-size:0.8rem;color:var(--muted);">Sem cartão de crédito · Resultado em minutos</p>
   </div>
 
   <hr class="divider" />
@@ -641,10 +609,10 @@
   <!-- CTA FINAL -->
   <div class="cta-section">
     <h2>Pronto para analisar processos em minutos?</h2>
-    <p>Cadastre-se agora e garanta 30 dias grátis no lançamento.</p>
-    <a href="#top" onclick="window.scrollTo({top:0,behavior:'smooth'}); return false;">
+    <p>Crie sua conta agora. Sem cartão de crédito.</p>
+    <a href="auth.html#signup" style="text-decoration:none;">
       <button class="btn" style="max-width: 320px; margin: 0 auto; display: block;">
-        Quero acesso antecipado →
+        Criar conta grátis →
       </button>
     </a>
   </div>
