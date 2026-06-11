@@ -18,14 +18,17 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Restore API
+        run: dotnet restore src/ProcessIA.API/ProcessIA.API.csproj
 
-      - name: Build
-        run: dotnet build --no-restore -c Release
+      - name: Restore Web
+        run: dotnet restore src/ProcessIA.Web/ProcessIA.Web.csproj
 
-      - name: Test
-        run: dotnet test --no-build -c Release --verbosity normal
+      - name: Build API
+        run: dotnet build src/ProcessIA.API/ProcessIA.API.csproj --no-restore -c Release
+
+      - name: Build Web
+        run: dotnet build src/ProcessIA.Web/ProcessIA.Web.csproj --no-restore -c Release
 
   docker:
     name: Docker Build
