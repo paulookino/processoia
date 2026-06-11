@@ -66,9 +66,9 @@ else if (Model.Report is not null)
       @if (deadlines.Any())
       {
         <ul class="deadline-list">
-          @foreach (var dl in deadlines)
+          @foreach (var deadline in deadlines)
           {
-            <li>@dl</li>
+            <li>@deadline</li>
           }
         </ul>
       }
